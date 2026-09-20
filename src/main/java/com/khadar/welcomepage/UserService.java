@@ -2,12 +2,17 @@ package com.khadar.welcomepage;
 
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.regex.Pattern;
 
 @Service
 public class UserService {
+
+    private static final Logger logger =
+            LoggerFactory.getLogger(UserService.class);
 
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
@@ -34,11 +39,23 @@ public class UserService {
 
         // Validate email
         if (!EMAIL_PATTERN.matcher(email).matches()) {
+
+            logger.warn(
+                    "Signup failed - invalid email format: {}",
+                    email
+            );
+
             return "INVALID_EMAIL";
         }
 
         // Check if email already exists
         if (userRepository.existsByEmailIgnoreCase(email)) {
+
+            logger.warn(
+                    "Signup failed - email already registered: {}",
+                    email
+            );
+
             return "EMAIL_EXISTS";
         }
 
@@ -56,6 +73,11 @@ public class UserService {
 
         // Save user
         userRepository.save(user);
+
+        logger.info(
+                "User registration successful - email: {}",
+                email
+        );
 
         return "SUCCESS";
     }
@@ -75,6 +97,12 @@ public class UserService {
 
         // User does not exist
         if (userOptional.isEmpty()) {
+
+            logger.warn(
+                    "Login failed - user not registered - email: {}",
+                    email
+            );
+
             return "USER_NOT_REGISTERED";
         }
 
@@ -85,10 +113,20 @@ public class UserService {
                 password,
                 user.getPassword())) {
 
+            logger.warn(
+                    "Login failed - invalid password - email: {}",
+                    email
+            );
+
             return "INVALID_PASSWORD";
         }
 
         // Login successful
+        logger.info(
+                "Login successful - email: {}",
+                email
+        );
+
         return "SUCCESS";
     }
 }

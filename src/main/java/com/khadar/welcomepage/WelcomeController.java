@@ -1,5 +1,7 @@
 package com.khadar.welcomepage;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -8,6 +10,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 public class WelcomeController {
+
+    private static final Logger logger =
+            LoggerFactory.getLogger(WelcomeController.class);
 
     private final UserService userService;
 
@@ -20,6 +25,9 @@ public class WelcomeController {
     // ==========================
     @GetMapping("/")
     public String welcome() {
+
+        logger.info("Welcome page requested");
+
         return "welcome";
     }
 
@@ -28,6 +36,9 @@ public class WelcomeController {
     // ==========================
     @GetMapping("/login")
     public String login() {
+
+        logger.info("Login page requested");
+
         return "login";
     }
 
@@ -40,41 +51,90 @@ public class WelcomeController {
             @RequestParam String password,
             Model model) {
 
-        String result = userService.loginUser(
-                email,
-                password
+        logger.info(
+                "Login request received - email: {}",
+                email
         );
 
-        // Login successful
-        if ("SUCCESS".equals(result)) {
-            return "redirect:/shop";
-        }
+        try {
 
-        // User is not registered
-        if ("USER_NOT_REGISTERED".equals(result)) {
+            String result = userService.loginUser(
+                    email,
+                    password
+            );
+
+            // Login successful
+            if ("SUCCESS".equals(result)) {
+
+                logger.info(
+                        "Login request successful - email: {}",
+                        email
+                );
+
+                return "redirect:/shop";
+            }
+
+            // User is not registered
+            if ("USER_NOT_REGISTERED".equals(result)) {
+
+                logger.warn(
+                        "Login request failed - user not registered - email: {}",
+                        email
+                );
+
+                model.addAttribute(
+                        "error",
+                        "User is not registered. Please sign up first."
+                );
+
+                return "login";
+            }
+
+            // Wrong password
+            if ("INVALID_PASSWORD".equals(result)) {
+
+                logger.warn(
+                        "Login request failed - invalid password - email: {}",
+                        email
+                );
+
+                model.addAttribute(
+                        "error",
+                        "Invalid password. Please try again."
+                );
+
+                return "login";
+            }
+
+            // Unexpected result
+            logger.error(
+                    "Login request returned unexpected result - email: {} result: {}",
+                    email,
+                    result
+            );
+
             model.addAttribute(
                     "error",
-                    "User is not registered. Please sign up first."
+                    "Something went wrong. Please try again."
             );
-            return "login";
-        }
 
-        // Wrong password
-        if ("INVALID_PASSWORD".equals(result)) {
+            return "login";
+
+        } catch (Exception e) {
+
+            logger.error(
+                    "Unexpected error during login - email: {}",
+                    email,
+                    e
+            );
+
             model.addAttribute(
                     "error",
-                    "Invalid password. Please try again."
+                    "Something went wrong. Please try again."
             );
+
             return "login";
         }
-
-        // Unexpected error
-        model.addAttribute(
-                "error",
-                "Something went wrong. Please try again."
-        );
-
-        return "login";
     }
 
     // ==========================
@@ -82,6 +142,9 @@ public class WelcomeController {
     // ==========================
     @GetMapping("/signup")
     public String signup() {
+
+        logger.info("Signup page requested");
+
         return "signup";
     }
 
@@ -95,42 +158,91 @@ public class WelcomeController {
             @RequestParam String password,
             Model model) {
 
-        String result = userService.registerUser(
-                fullName,
-                email,
-                password
+        logger.info(
+                "Signup request received - email: {}",
+                email
         );
 
-        // Invalid email
-        if ("INVALID_EMAIL".equals(result)) {
+        try {
+
+            String result = userService.registerUser(
+                    fullName,
+                    email,
+                    password
+            );
+
+            // Invalid email
+            if ("INVALID_EMAIL".equals(result)) {
+
+                logger.warn(
+                        "Signup request failed - invalid email - email: {}",
+                        email
+                );
+
+                model.addAttribute(
+                        "error",
+                        "Please enter a correct email address."
+                );
+
+                return "signup";
+            }
+
+            // Email already registered
+            if ("EMAIL_EXISTS".equals(result)) {
+
+                logger.warn(
+                        "Signup request failed - email already registered - email: {}",
+                        email
+                );
+
+                model.addAttribute(
+                        "error",
+                        "Email is already registered."
+                );
+
+                return "signup";
+            }
+
+            // Signup successful
+            if ("SUCCESS".equals(result)) {
+
+                logger.info(
+                        "Signup request successful - email: {}",
+                        email
+                );
+
+                return "redirect:/login?signupSuccess=true";
+            }
+
+            // Unexpected result
+            logger.error(
+                    "Signup request returned unexpected result - email: {} result: {}",
+                    email,
+                    result
+            );
+
             model.addAttribute(
                     "error",
-                    "Please enter a correct email address."
+                    "Something went wrong. Please try again."
             );
-            return "signup";
-        }
 
-        // Email already registered
-        if ("EMAIL_EXISTS".equals(result)) {
+            return "signup";
+
+        } catch (Exception e) {
+
+            logger.error(
+                    "Unexpected error during signup - email: {}",
+                    email,
+                    e
+            );
+
             model.addAttribute(
                     "error",
-                    "Email is already registered."
+                    "Something went wrong. Please try again."
             );
+
             return "signup";
         }
-
-        // Signup successful
-        if ("SUCCESS".equals(result)) {
-            return "redirect:/login?signupSuccess=true";
-        }
-
-        // Unexpected error
-        model.addAttribute(
-                "error",
-                "Something went wrong. Please try again."
-        );
-
-        return "signup";
     }
 
     // ==========================
@@ -138,6 +250,9 @@ public class WelcomeController {
     // ==========================
     @GetMapping("/shop")
     public String shop() {
+
+        logger.info("Shop page requested");
+
         return "shop";
     }
 
@@ -146,6 +261,9 @@ public class WelcomeController {
     // ==========================
     @GetMapping("/track-order")
     public String trackOrder() {
+
+        logger.info("Track order page requested");
+
         return "track-order";
     }
 }
