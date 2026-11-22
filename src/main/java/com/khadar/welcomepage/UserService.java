@@ -1,9 +1,12 @@
+
 package com.khadar.welcomepage;
 
-import org.springframework.stereotype.Service;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -15,118 +18,193 @@ public class UserService {
             LoggerFactory.getLogger(UserService.class);
 
     private final UserRepository userRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
     private static final Pattern EMAIL_PATTERN =
-            Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+            Pattern.compile(
+                "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
+            );
 
-    public UserService(UserRepository userRepository) {
+    private static final Pattern NAME_PATTERN =
+            Pattern.compile("^.{2,100}$");
+
+    public UserService(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder) {
+
         this.userRepository = userRepository;
-        this.passwordEncoder = new BCryptPasswordEncoder();
+        this.passwordEncoder = passwordEncoder;
     }
 
-    // ==========================
-    // SIGNUP
-    // ==========================
+    // =====================================
+    // REGISTER USER
+    // =====================================
+
+    @Transactional
     public String registerUser(
             String fullName,
             String email,
-            String password) {
+            String mobileNumber,
+            String password,
+            boolean mobileVerified) {
 
         fullName = fullName == null ? "" : fullName.trim();
-        email = email == null ? "" : email.trim().toLowerCase();
-        password = password == null ? "" : password;
 
-        // Validate email
+        email = normalizeEmail(email);
+
+        mobileNumber = normalizeMobile(mobileNumber);
+
+        if (!NAME_PATTERN.matcher(fullName).matches()) {
+            return "INVALID_NAME";
+        }
+
         if (!EMAIL_PATTERN.matcher(email).matches()) {
-
-            logger.warn(
-                    "Signup failed - invalid email format: {}",
-                    email
-            );
-
             return "INVALID_EMAIL";
         }
 
-        // Check if email already exists
+        if (password == null || password.length() < 8
+                || password.length() > 72) {
+            return "INVALID_PASSWORD";
+        }
+
+        if (!mobileVerified) {
+            return "MOBILE_NOT_VERIFIED";
+        }
+
         if (userRepository.existsByEmailIgnoreCase(email)) {
-
-            logger.warn(
-                    "Signup failed - email already registered: {}",
-                    email
-            );
-
             return "EMAIL_EXISTS";
         }
 
-        // Create new user
+        if (userRepository.existsByMobileNumber(mobileNumber)) {
+            return "MOBILE_EXISTS";
+        }
+
         User user = new User();
 
         user.setFullName(fullName);
         user.setEmail(email);
+        user.setMobileNumber(mobileNumber);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setMobileVerified(true);
 
-        // Encrypt password before saving
-        String encryptedPassword =
-                passwordEncoder.encode(password);
+        try {
 
-        user.setPassword(encryptedPassword);
+            userRepository.saveAndFlush(user);
 
-        // Save user
-        userRepository.save(user);
+            logger.info("New customer registration successful.");
 
-        logger.info(
-                "User registration successful - email: {}",
-                email
-        );
+            return "SUCCESS";
 
-        return "SUCCESS";
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+
+            logger.warn("Registration rejected due to duplicate data.");
+
+            return "REGISTRATION_CONFLICT";
+        }
     }
 
-    // ==========================
-    // LOGIN
-    // ==========================
-    public String loginUser(
+    // =====================================
+    // EMAIL LOGIN
+    // =====================================
+
+    @Transactional(readOnly = true)
+    public Optional<User> authenticateByEmail(
             String email,
             String password) {
 
-        email = email == null ? "" : email.trim().toLowerCase();
-        password = password == null ? "" : password;
+        email = normalizeEmail(email);
+
+        if (!EMAIL_PATTERN.matcher(email).matches()
+                || password == null) {
+            return Optional.empty();
+        }
 
         Optional<User> userOptional =
                 userRepository.findByEmailIgnoreCase(email);
 
-        // User does not exist
         if (userOptional.isEmpty()) {
-
-            logger.warn(
-                    "Login failed - user not registered - email: {}",
-                    email
-            );
-
-            return "USER_NOT_REGISTERED";
+            logger.warn("Email login failed.");
+            return Optional.empty();
         }
 
         User user = userOptional.get();
 
-        // User exists, but password is incorrect
         if (!passwordEncoder.matches(
                 password,
                 user.getPassword())) {
 
-            logger.warn(
-                    "Login failed - invalid password - email: {}",
-                    email
-            );
+            logger.warn("Password verification failed.");
 
-            return "INVALID_PASSWORD";
+            return Optional.empty();
         }
 
-        // Login successful
-        logger.info(
-                "Login successful - email: {}",
-                email
-        );
+        logger.info("Email login successful.");
 
-        return "SUCCESS";
+        return Optional.of(user);
+    }
+
+    // =====================================
+    // MOBILE LOGIN
+    // =====================================
+
+    @Transactional(readOnly = true)
+    public Optional<User> authenticateByMobile(
+            String mobileNumber) {
+
+        mobileNumber = normalizeMobile(mobileNumber);
+
+        Optional<User> userOptional =
+                userRepository.findByMobileNumberAndMobileVerifiedTrue(
+                        mobileNumber
+                );
+
+        if (userOptional.isEmpty()) {
+            logger.warn("Mobile login failed: account not found.");
+            return Optional.empty();
+        }
+
+        logger.info("Mobile login successful.");
+
+        return userOptional;
+    }
+
+    // =====================================
+    // NORMALIZE EMAIL
+    // =====================================
+
+    public String normalizeEmail(String email) {
+
+        return email == null
+                ? ""
+                : email.trim().toLowerCase(
+                    java.util.Locale.ROOT
+                );
+    }
+
+    // =====================================
+    // NORMALIZE MOBILE
+    // =====================================
+
+    public String normalizeMobile(String mobileNumber) {
+
+        if (mobileNumber == null) {
+            return "";
+        }
+
+        String mobile =
+                mobileNumber.replaceAll("[\\s-]", "");
+
+        if (mobile.startsWith("+91")) {
+            mobile = mobile.substring(3);
+        } else if (mobile.startsWith("91")
+                && mobile.length() == 12) {
+            mobile = mobile.substring(2);
+        }
+
+        if (!mobile.matches("^[6-9][0-9]{9}$")) {
+            return "";
+        }
+
+        return mobile;
     }
 }
