@@ -8,6 +8,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Locale;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -37,7 +38,7 @@ public class UserService {
     }
 
     // =====================================
-    // REGISTER USER
+    // REGISTER USER - NO OTP REQUIRED
     // =====================================
 
     @Transactional
@@ -49,9 +50,7 @@ public class UserService {
             boolean mobileVerified) {
 
         fullName = fullName == null ? "" : fullName.trim();
-
         email = normalizeEmail(email);
-
         mobileNumber = normalizeMobile(mobileNumber);
 
         if (!NAME_PATTERN.matcher(fullName).matches()) {
@@ -62,17 +61,13 @@ public class UserService {
             return "INVALID_EMAIL";
         }
 
+        if (mobileNumber.isBlank()) {
+            return "INVALID_MOBILE";
+        }
+
         if (password == null || password.length() < 8
                 || password.length() > 72) {
             return "INVALID_PASSWORD";
-        }
-
-        if (!mobileVerified) {
-            return "MOBILE_NOT_VERIFIED";
-        }
-
-        if (mobileNumber.isBlank()) {
-            return "INVALID_MOBILE";
         }
 
         if (userRepository.existsByEmailIgnoreCase(email)) {
@@ -89,17 +84,19 @@ public class UserService {
         user.setEmail(email);
         user.setMobileNumber(mobileNumber);
         user.setPassword(passwordEncoder.encode(password));
-        user.setMobileVerified(true);
+
+        // Signup does not require OTP verification.
+        user.setMobileVerified(false);
 
         try {
-
             userRepository.saveAndFlush(user);
 
-            logger.info("New customer registration successful.");
+            logger.info("Customer registration successful.");
 
             return "SUCCESS";
 
-        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+        } catch (
+                org.springframework.dao.DataIntegrityViolationException e) {
 
             logger.warn("Registration rejected due to duplicate data.");
 
@@ -108,7 +105,7 @@ public class UserService {
     }
 
     // =====================================
-    // EMAIL LOGIN
+    // EMAIL AND PASSWORD LOGIN
     // =====================================
 
     @Transactional(readOnly = true)
@@ -148,36 +145,41 @@ public class UserService {
     }
 
     // =====================================
-    // MOBILE LOGIN
+    // FIND REGISTERED MOBILE
+    // =====================================
+
+    @Transactional(readOnly = true)
+    public Optional<User> findByMobile(String mobileNumber) {
+
+        String mobile = normalizeMobile(mobileNumber);
+
+        if (mobile.isBlank()) {
+            return Optional.empty();
+        }
+
+        return userRepository.findByMobileNumber(mobile);
+    }
+
+    // =====================================
+    // MOBILE LOGIN - VERIFIED USERS
     // =====================================
 
     @Transactional(readOnly = true)
     public Optional<User> authenticateByMobile(
             String mobileNumber) {
 
-        mobileNumber = normalizeMobile(mobileNumber);
+        String mobile = normalizeMobile(mobileNumber);
 
-        if (mobileNumber.isBlank()) {
+        if (mobile.isBlank()) {
             return Optional.empty();
         }
 
-        Optional<User> userOptional =
-                userRepository.findByMobileNumberAndMobileVerifiedTrue(
-                        mobileNumber
-                );
-
-        if (userOptional.isEmpty()) {
-            logger.warn("Mobile login failed: account not found.");
-            return Optional.empty();
-        }
-
-        logger.info("Mobile login successful.");
-
-        return userOptional;
+        return userRepository
+                .findByMobileNumberAndMobileVerifiedTrue(mobile);
     }
 
     // =====================================
-    // CHECK WHETHER MOBILE EXISTS
+    // CHECK MOBILE EXISTS
     // =====================================
 
     public boolean mobileExists(String mobileNumber) {
@@ -189,18 +191,18 @@ public class UserService {
     }
 
     // =====================================
-    // CHECK WHETHER MOBILE IS REGISTERED
-    // AND VERIFIED (FOR OTP LOGIN)
+    // CHECK REGISTERED AND VERIFIED MOBILE
     // =====================================
 
-    public boolean authenticateByMobileExists(String mobileNumber) {
+    public boolean authenticateByMobileExists(
+            String mobileNumber) {
 
         String mobile = normalizeMobile(mobileNumber);
 
         return !mobile.isBlank()
                 && userRepository
-                        .findByMobileNumberAndMobileVerifiedTrue(mobile)
-                        .isPresent();
+                    .findByMobileNumberAndMobileVerifiedTrue(mobile)
+                    .isPresent();
     }
 
     // =====================================
@@ -211,9 +213,7 @@ public class UserService {
 
         return email == null
                 ? ""
-                : email.trim().toLowerCase(
-                    java.util.Locale.ROOT
-                );
+                : email.trim().toLowerCase(Locale.ROOT);
     }
 
     // =====================================
