@@ -24,12 +24,16 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false)
-    private String password;
-
+    // Nullable to preserve existing customers
+    // who registered before mobile authentication.
     @Column(name = "mobile_number", unique = true)
     private String mobileNumber;
 
+    // Existing password remains required.
+    @Column(nullable = false)
+    private String password;
+
+    // New customers must verify their mobile number.
     @Column(name = "mobile_verified", nullable = false)
     private boolean mobileVerified = false;
 
@@ -38,10 +42,14 @@ public class User {
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
     }
 
-    // Getters and Setters
+    // =====================================
+    // GETTERS AND SETTERS
+    // =====================================
 
     public Long getId() {
         return id;
@@ -67,20 +75,20 @@ public class User {
         this.email = email;
     }
 
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
     public String getMobileNumber() {
         return mobileNumber;
     }
 
     public void setMobileNumber(String mobileNumber) {
         this.mobileNumber = mobileNumber;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public boolean isMobileVerified() {
