@@ -1,3 +1,4 @@
+
 package com.khadar.welcomepage;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -6,9 +7,21 @@ import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    // Check whether an email is already registered
+    // Email operations
+
     boolean existsByEmailIgnoreCase(String email);
 
-    // Find a user by email for login
     Optional<User> findByEmailIgnoreCase(String email);
+
+    // Mobile number operations
+
+    boolean existsByMobileNumber(String mobileNumber);
+
+    Optional<User> findByMobileNumber(String mobileNumber);
+
+    // Only verified mobile accounts can use OTP login
+
+    Optional<User> findByMobileNumberAndMobileVerifiedTrue(
+            String mobileNumber
+    );
 }
