@@ -1,7 +1,9 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 
 <head>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -21,17 +23,13 @@
             color: #111;
         }
 
-        /* =========================
-           HEADER
-           ========================= */
-
         header {
-            background: #ffffff;
-            height: 75px;
+            background: white;
+            min-height: 75px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 50px;
+            padding: 15px 40px;
             border-bottom: 1px solid #ddd;
             position: sticky;
             top: 0;
@@ -39,7 +37,7 @@
         }
 
         .logo {
-            font-size: 28px;
+            font-size: 27px;
             font-weight: bold;
             letter-spacing: 2px;
         }
@@ -47,13 +45,13 @@
         .nav {
             display: flex;
             align-items: center;
-            gap: 25px;
+            gap: 22px;
         }
 
         .nav a {
             text-decoration: none;
             color: #111;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
         }
 
@@ -61,22 +59,25 @@
             color: #777;
         }
 
-        .cart {
+        .logout-button {
             background: #111;
-            color: white !important;
-            padding: 10px 18px;
+            color: white;
+            border: none;
+            padding: 11px 20px;
             border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
         }
 
-        /* =========================
-           HERO
-           ========================= */
+        .logout-button:hover {
+            background: #444;
+        }
 
         .hero {
             background: #111;
             color: white;
             text-align: center;
-            padding: 55px 20px;
+            padding: 65px 20px;
         }
 
         .hero h1 {
@@ -86,16 +87,12 @@
         }
 
         .hero p {
-            font-size: 18px;
+            font-size: 17px;
             color: #ddd;
         }
 
-        /* =========================
-           PRODUCTS
-           ========================= */
-
         .products-section {
-            padding: 45px 50px;
+            padding: 45px 40px;
         }
 
         .section-title {
@@ -124,15 +121,13 @@
             background: white;
             border-radius: 10px;
             overflow: hidden;
-            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.12);
-            transition: transform 0.2s;
+            box-shadow: 0 3px 12px rgba(0,0,0,.12);
+            transition: transform .2s;
         }
 
         .product-card:hover {
             transform: translateY(-5px);
         }
-
-        /* Temporary shoe image area */
 
         .shoe-image {
             height: 230px;
@@ -171,7 +166,7 @@
             border: none;
             background: #111;
             color: white;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: bold;
             border-radius: 5px;
             cursor: pointer;
@@ -181,10 +176,6 @@
             background: #333;
         }
 
-        /* =========================
-           FOOTER
-           ========================= */
-
         footer {
             background: #111;
             color: white;
@@ -193,26 +184,28 @@
             margin-top: 30px;
         }
 
-        /* =========================
-           MOBILE
-           ========================= */
-
-        @media (max-width: 1000px) {
-
+        @media(max-width: 1000px) {
             .products {
                 grid-template-columns: repeat(2, 1fr);
             }
-
         }
 
-        @media (max-width: 600px) {
+        @media(max-width: 600px) {
 
             header {
-                padding: 0 20px;
+                padding: 15px;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .logo {
+                font-size: 23px;
             }
 
             .nav {
-                gap: 10px;
+                gap: 13px;
+                flex-wrap: wrap;
+                justify-content: center;
             }
 
             .nav a {
@@ -220,7 +213,7 @@
             }
 
             .products-section {
-                padding: 30px 20px;
+                padding: 30px 18px;
             }
 
             .products {
@@ -228,19 +221,16 @@
             }
 
             .hero h1 {
-                font-size: 32px;
+                font-size: 30px;
             }
 
         }
 
     </style>
+
 </head>
 
 <body>
-
-<!-- =========================
-     HEADER
-     ========================= -->
 
 <header>
 
@@ -248,26 +238,26 @@
         KB STRIDE
     </div>
 
-    <div class="nav">
+    <nav class="nav">
 
-        <a href="/shop">Home</a>
-
-        <a href="/track-order">Track Order</a>
-
-        <a href="/login">Logout</a>
-
-        <a href="#" class="cart">
-            🛒 Cart
+        <a th:href="@{/shop}">
+            Home
         </a>
 
-    </div>
+        <a th:href="@{/track-order}">
+            Track Order
+        </a>
+
+        <form th:action="@{/logout}" method="post">
+            <button type="submit" class="logout-button">
+                LOGOUT
+            </button>
+        </form>
+
+    </nav>
 
 </header>
 
-
-<!-- =========================
-     HERO
-     ========================= -->
 
 <section class="hero">
 
@@ -279,10 +269,6 @@
 
 </section>
 
-
-<!-- =========================
-     PRODUCTS
-     ========================= -->
 
 <section class="products-section">
 
@@ -299,14 +285,9 @@
 
     <div class="products">
 
-
-        <!-- PRODUCT 1 -->
-
         <div class="product-card">
 
-            <div class="shoe-image">
-                👟
-            </div>
+            <div class="shoe-image">👟</div>
 
             <div class="product-info">
 
@@ -318,11 +299,9 @@
                     Lightweight everyday running shoes.
                 </div>
 
-                <div class="price">
-                    ₹2,499
-                </div>
+                <div class="price">₹2,499</div>
 
-                <button class="add-cart">
+                <button class="add-cart" type="button">
                     ADD TO CART
                 </button>
 
@@ -331,13 +310,9 @@
         </div>
 
 
-        <!-- PRODUCT 2 -->
-
         <div class="product-card">
 
-            <div class="shoe-image">
-                👟
-            </div>
+            <div class="shoe-image">👟</div>
 
             <div class="product-info">
 
@@ -349,11 +324,9 @@
                     Comfortable shoes for everyday walking.
                 </div>
 
-                <div class="price">
-                    ₹2,999
-                </div>
+                <div class="price">₹2,999</div>
 
-                <button class="add-cart">
+                <button class="add-cart" type="button">
                     ADD TO CART
                 </button>
 
@@ -362,13 +335,9 @@
         </div>
 
 
-        <!-- PRODUCT 3 -->
-
         <div class="product-card">
 
-            <div class="shoe-image">
-                👟
-            </div>
+            <div class="shoe-image">👟</div>
 
             <div class="product-info">
 
@@ -380,11 +349,9 @@
                     Modern streetwear sneakers.
                 </div>
 
-                <div class="price">
-                    ₹3,499
-                </div>
+                <div class="price">₹3,499</div>
 
-                <button class="add-cart">
+                <button class="add-cart" type="button">
                     ADD TO CART
                 </button>
 
@@ -393,13 +360,9 @@
         </div>
 
 
-        <!-- PRODUCT 4 -->
-
         <div class="product-card">
 
-            <div class="shoe-image">
-                👟
-            </div>
+            <div class="shoe-image">👟</div>
 
             <div class="product-info">
 
@@ -411,11 +374,9 @@
                     Designed for active everyday lifestyles.
                 </div>
 
-                <div class="price">
-                    ₹3,999
-                </div>
+                <div class="price">₹3,999</div>
 
-                <button class="add-cart">
+                <button class="add-cart" type="button">
                     ADD TO CART
                 </button>
 
@@ -427,10 +388,6 @@
 
 </section>
 
-
-<!-- =========================
-     FOOTER
-     ========================= -->
 
 <footer>
 
