@@ -7,19 +7,25 @@ import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    // Email operations
+    // =====================================
+    // EMAIL
+    // =====================================
 
     boolean existsByEmailIgnoreCase(String email);
 
     Optional<User> findByEmailIgnoreCase(String email);
 
-    // Mobile number operations
+    // =====================================
+    // MOBILE NUMBER
+    // =====================================
 
     boolean existsByMobileNumber(String mobileNumber);
 
     Optional<User> findByMobileNumber(String mobileNumber);
 
-    // Only verified mobile accounts can use OTP login
+    // =====================================
+    // MOBILE VERIFICATION
+    // =====================================
 
     Optional<User> findByMobileNumberAndMobileVerifiedTrue(
             String mobileNumber
