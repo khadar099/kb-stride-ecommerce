@@ -1,19 +1,204 @@
+
 <!DOCTYPE html>
-<html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
 <head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>KB STRIDE - Track Order</title>
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            color: #111;
+        }
+
+        header {
+            background: #111;
+            color: white;
+            padding: 22px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 25px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        header a {
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 75vh;
+            padding: 20px;
+        }
+
+        .tracking-box {
+            background: white;
+            width: 100%;
+            max-width: 450px;
+            padding: 40px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 18px rgba(0,0,0,.12);
+            text-align: center;
+        }
+
+        .tracking-icon {
+            font-size: 55px;
+            margin-bottom: 15px;
+        }
+
+        h1 {
+            font-size: 27px;
+            margin-bottom: 12px;
+        }
+
+        .description {
+            color: #777;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #ccc;
+            border-radius: 7px;
+            font-size: 15px;
+            margin-bottom: 18px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            background: #111;
+            color: white;
+            font-weight: bold;
+            font-size: 15px;
+            border-radius: 7px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #333;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 22px;
+            text-decoration: none;
+            color: #111;
+            font-size: 14px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 25px;
+            color: #777;
+            font-size: 13px;
+        }
+
+        @media(max-width: 480px) {
+
+            header {
+                padding: 18px;
+            }
+
+            .logo {
+                font-size: 21px;
+            }
+
+            .tracking-box {
+                padding: 30px 20px;
+            }
+
+        }
+
+    </style>
+
 </head>
+
 <body>
 
-<h1>KB STRIDE</h1>
-<h2>Track Your Order</h2>
+<header>
 
-<form>
-    <input type="text" placeholder="Enter Order ID" required>
-    <br><br>
+    <div class="logo">
+        KB STRIDE
+    </div>
 
-    <button type="submit">TRACK ORDER</button>
-</form>
+    <a th:href="@{/auth}">
+        LOGIN / SIGN UP
+    </a>
+
+</header>
+
+
+<main class="container">
+
+    <div class="tracking-box">
+
+        <div class="tracking-icon">
+            📦
+        </div>
+
+        <h1>Track Your Order</h1>
+
+        <p class="description">
+            Enter your order ID below to check the status
+            of your KB STRIDE purchase.
+        </p>
+
+        <form th:action="@{/track-order}" method="get">
+
+            <input
+                type="text"
+                name="orderId"
+                placeholder="Enter Your Order ID"
+                maxlength="50"
+                required>
+
+            <button type="submit">
+                TRACK ORDER
+            </button>
+
+        </form>
+
+        <a th:href="@{/}" class="back-link">
+            ← Back to Home
+        </a>
+
+    </div>
+
+</main>
+
+
+<footer>
+    © 2026 KB STRIDE. OWN EVERY STEP.
+</footer>
 
 </body>
+
 </html>
