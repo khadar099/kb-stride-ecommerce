@@ -71,6 +71,10 @@ public class UserService {
             return "MOBILE_NOT_VERIFIED";
         }
 
+        if (mobileNumber.isBlank()) {
+            return "INVALID_MOBILE";
+        }
+
         if (userRepository.existsByEmailIgnoreCase(email)) {
             return "EMAIL_EXISTS";
         }
@@ -153,6 +157,10 @@ public class UserService {
 
         mobileNumber = normalizeMobile(mobileNumber);
 
+        if (mobileNumber.isBlank()) {
+            return Optional.empty();
+        }
+
         Optional<User> userOptional =
                 userRepository.findByMobileNumberAndMobileVerifiedTrue(
                         mobileNumber
@@ -166,6 +174,33 @@ public class UserService {
         logger.info("Mobile login successful.");
 
         return userOptional;
+    }
+
+    // =====================================
+    // CHECK WHETHER MOBILE EXISTS
+    // =====================================
+
+    public boolean mobileExists(String mobileNumber) {
+
+        String mobile = normalizeMobile(mobileNumber);
+
+        return !mobile.isBlank()
+                && userRepository.existsByMobileNumber(mobile);
+    }
+
+    // =====================================
+    // CHECK WHETHER MOBILE IS REGISTERED
+    // AND VERIFIED (FOR OTP LOGIN)
+    // =====================================
+
+    public boolean authenticateByMobileExists(String mobileNumber) {
+
+        String mobile = normalizeMobile(mobileNumber);
+
+        return !mobile.isBlank()
+                && userRepository
+                        .findByMobileNumberAndMobileVerifiedTrue(mobile)
+                        .isPresent();
     }
 
     // =====================================
